@@ -1,0 +1,419 @@
+/* ============ БАЗА ============ */
+* { box-sizing: border-box; font-family: 'Courier New', monospace; user-select: none; }
+html, body { height: 100%; }
+body {
+  background: #0d0d0d; margin: 0; padding: 8px; color: #e0e0e0;
+  overflow: hidden;
+}
+
+/* ============ ВЕРХНЯЯ ПАНЕЛЬ ============ */
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 8px 14px; margin-bottom: 8px;
+  background: #1a1a1a; border: 3px solid #333; border-radius: 12px;
+  flex-wrap: wrap; transition: background 0.3s, border-color 0.3s;
+}
+.top-bar.my-turn {
+  background: #1a2a1a; border-color: #33ff33;
+  animation: turnPulse 1.2s infinite alternate;
+}
+@keyframes turnPulse {
+  from { box-shadow: 0 0 0 rgba(51,255,51,0.3); }
+  to { box-shadow: 0 0 25px rgba(51,255,51,0.9); }
+}
+.top-bar .title {
+  color: #ff4444; font-weight: 900; letter-spacing: 2px; font-size: 1rem;
+  text-shadow: 0 0 10px #ff0000;
+}
+.top-bar .phase {
+  padding: 4px 12px; border-radius: 6px; font-weight: 900;
+  letter-spacing: 2px; font-size: 0.8rem;
+}
+.top-bar .phase.night { background: #0a0a2a; color: #8888ff; border: 2px solid #3333aa; }
+.top-bar .phase.day { background: #2a2a0a; color: #ffdd33; border: 2px solid #aa8800; }
+.top-bar .phase.vote { background: #2a1a0a; color: #ffaa44; border: 2px solid #aa5500; }
+.top-bar .phase.end { background: #1a0a0a; color: #ff4444; border: 2px solid #aa3333; }
+
+/* Глобальный таймер фазы */
+.global-timer {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: 6px;
+  font-weight: 900; font-size: 0.85rem; letter-spacing: 1px;
+  background: #0a1a2a; color: #88bbff; border: 2px solid #3388ff;
+  white-space: nowrap;
+}
+.global-timer.danger {
+  background: #2a0a0a; color: #ff8888; border-color: #ff3333;
+  animation: foulPulse 0.6s infinite alternate;
+}
+
+.my-role-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 6px;
+  font-weight: 900; font-size: 0.8rem;
+  border: 2px solid #666; cursor: pointer;
+}
+.my-role-chip.mafia { background: #2a0a0a; border-color: #aa3333; color: #ff8888; }
+.my-role-chip.don { background: #2a1a00; border-color: #ffaa00; color: #ffdd88; }
+.my-role-chip.sheriff { background: #0a1a2a; border-color: #3388ff; color: #88bbff; }
+.my-role-chip.civilian { background: #0a1a0a; border-color: #33aa33; color: #88ff88; }
+.my-role-chip.judge { background: #1a1a2a; border-color: #8888ff; color: #bbbbff; }
+.my-role-chip .click-hint { font-size: 0.65rem; opacity: 0.6; font-weight: normal; }
+.my-role-chip:hover { box-shadow: 0 0 12px currentColor; }
+
+.foul-chip {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  font-weight: 900; font-size: 0.8rem;
+  border: 2px solid #555; background: #0a0a0a; color: #888;
+}
+.foul-chip.warn { border-color: #aa8800; color: #ffdd88; background: #2a1a00; }
+.foul-chip.danger { border-color: #ff3333; color: #ff8888; background: #2a0a0a; animation: foulPulse 0.6s infinite alternate; }
+@keyframes foulPulse {
+  from { box-shadow: 0 0 5px rgba(255,51,51,0.4); }
+  to { box-shadow: 0 0 20px rgba(255,51,51,0.9); }
+}
+.top-bar .dead-flag {
+  color: #ff6666; font-weight: 900; font-size: 0.8rem; letter-spacing: 1px;
+}
+
+/* ============ ЛЕЙАУТ ============ */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 8px;
+  height: calc(100vh - 70px);
+}
+.col-main {
+  background: #1a1a1a; border: 3px solid #333; border-radius: 12px;
+  padding: 12px; overflow-y: auto; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.col-side {
+  background: #1a1a1a; border: 3px solid #2a5a2a; border-radius: 12px;
+  padding: 10px; display: flex; flex-direction: column; min-height: 0;
+}
+
+/* Вкладки чата */
+.chat-tabs { display: flex; gap: 4px; margin-bottom: 6px; }
+.chat-tab {
+  flex: 1; padding: 6px 10px; border-radius: 5px 5px 0 0;
+  text-align: center; font-size: 0.72rem; font-weight: 900;
+  letter-spacing: 1px; cursor: pointer;
+  background: #0a0a0a; border: 2px solid #2a5a2a; color: #88ff88;
+  transition: all 0.12s;
+}
+.chat-tab.active { background: #0a1a0a; border-color: #33ff33; box-shadow: 0 0 10px #33ff33; }
+.chat-tab.mafia { border-color: #5a2a2a; color: #ff8888; }
+.chat-tab.mafia.active { background: #1a0a0a; border-color: #ff3333; box-shadow: 0 0 10px #ff3333; }
+.chat-tab.locked { opacity: 0.4; cursor: not-allowed; }
+
+.chat-scroll { flex: 1; overflow-y: auto; padding-right: 4px; min-height: 0; }
+
+/* ============ ОБЩЕЕ ============ */
+h1, h2, h3 { text-align: center; letter-spacing: 1.5px; margin: 6px 0; }
+h1 { color: #ff4444; font-size: 1.2rem; }
+h2 { color: #ffdd33; font-size: 1rem; }
+h3 { color: #aaffaa; font-size: 0.85rem; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 6px 0; }
+
+button {
+  background: #2a1a1a; border: 2px solid #aa3333; color: #ff8888;
+  padding: 8px 14px; border-radius: 6px; cursor: pointer;
+  font-family: inherit; font-size: 0.78rem; font-weight: bold;
+  transition: all 0.1s;
+}
+button:hover:not(:disabled) { background: #4a1a1a; box-shadow: 0 0 12px #ff4444; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.green { border-color: #33aa33; color: #88ff88; background: #1a2a1a; }
+button.green:hover:not(:disabled) { background: #2a4a2a; box-shadow: 0 0 12px #33ff33; }
+button.blue { border-color: #3388ff; color: #88bbff; background: #1a1a2a; }
+button.blue:hover:not(:disabled) { background: #2a2a4a; box-shadow: 0 0 12px #3388ff; }
+button.preset {
+  padding: 5px 10px; font-size: 0.68rem;
+  background: #1a1a2a; border-color: #5555aa; color: #aaaaff;
+}
+button.preset:hover:not(:disabled) { background: #2a2a4a; box-shadow: 0 0 10px #8888ff; }
+button.foul {
+  padding: 4px 8px; font-size: 0.68rem;
+  background: #2a1a00; border-color: #aa8800; color: #ffdd88;
+}
+button.foul:hover:not(:disabled) { background: #4a3a00; box-shadow: 0 0 10px #ffaa00; }
+
+/* ============ КАРТОЧКИ ИГРОКОВ ============ */
+.player-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 6px; margin: 8px 0;
+}
+.player-card {
+  background: #111; border: 2px solid #444; border-radius: 6px;
+  padding: 6px; text-align: center; cursor: pointer;
+  transition: all 0.1s; position: relative;
+}
+.player-card:hover:not(.dead):not(.disabled) { border-color: #ff4444; box-shadow: 0 0 10px #ff4444; }
+.player-card.selected { border-color: #ffdd33; background: #2a2a1a; box-shadow: 0 0 12px #ffdd33; }
+.player-card.dead { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+.player-card.disabled { opacity: 0.35; cursor: not-allowed; }
+.player-card.voted { border-color: #33aa33; background: #0a1a0a; opacity: 1; }
+.player-card.dq { border-color: #ff00ff; background: #1a0a1a; }
+.player-card.me { border-color: #33aa33; }
+.player-card .num { font-size: 1rem; font-weight: 900; color: #ffdd33; }
+.player-card .name { font-size: 0.65rem; color: #aaa; }
+.player-card .fouls {
+  position: absolute; top: 2px; right: 4px;
+  font-size: 0.62rem; color: #ffaa00; font-weight: 900;
+}
+.player-card .role-revealed { font-size: 0.65rem; color: #ff8888; margin-top: 3px; }
+.player-card .badge { font-size: 0.65rem; margin-top: 3px; }
+
+/* ============ ЛОГ ============ */
+.log {
+  background: #0a0a0a; border: 2px solid #2a5a2a; border-radius: 6px;
+  padding: 8px; overflow-y: auto; font-size: 0.68rem;
+  color: #88ff88; line-height: 1.4; margin: 8px 0;
+  max-height: none !important;
+  flex: 1;
+  min-height: 80px;
+}
+.log div { border-bottom: 1px dashed #1a3a1a; padding: 2px 0; }
+.log .night { color: #8888ff; }
+.log .day { color: #ffdd33; }
+.log .kill { color: #ff6666; }
+.log .vote { color: #ffaa44; }
+.log .check { color: #88ffff; }
+.log .speech { color: #ccffcc; }
+.log .foul { color: #ffaa00; font-weight: bold; }
+.log .dq { color: #ff44ff; font-weight: bold; }
+.log .warn { color: #ff8888; }
+.log .end { color: #ff4444; font-weight: bold; }
+
+/* ============ ИНФО-БОКСЫ ============ */
+.info-box {
+  background: #0a0a1a; border: 2px solid #3333aa; border-radius: 6px;
+  padding: 8px 12px; color: #aabbff; font-size: 0.75rem; line-height: 1.4;
+  margin: 8px 0;
+}
+.info-box.warn { border-color: #aa3333; color: #ffaaaa; background: #1a0a0a; }
+.info-box.good { border-color: #33aa33; color: #aaffaa; background: #0a1a0a; }
+
+/* ============ РОЛЬ BIG ============ */
+.role-big {
+  text-align: center; padding: 16px; border-radius: 10px; margin: 8px 0;
+}
+.role-big .emoji { font-size: 3rem; }
+.role-big .title { font-size: 1.2rem; font-weight: 900; margin: 6px 0; letter-spacing: 2px; }
+.role-big .desc { font-size: 0.78rem; line-height: 1.4; color: #ccc; }
+.role-big.mafia { background: #2a0a0a; border: 3px solid #aa3333; color: #ff8888; }
+.role-big.don { background: #2a1a00; border: 3px solid #ffaa00; color: #ffdd88; }
+.role-big.sheriff { background: #0a1a2a; border: 3px solid #3388ff; color: #88bbff; }
+.role-big.civilian { background: #0a1a0a; border: 3px solid #33aa33; color: #88ff88; }
+.role-big.judge { background: #1a1a2a; border: 3px solid #8888ff; color: #bbbbff; }
+
+/* ============ ТАЙМЕРЫ ============ */
+.timer {
+  font-size: 1.6rem; font-weight: 900; text-align: center; color: #ffdd33;
+  text-shadow: 0 0 12px #aa8800; margin: 6px 0; letter-spacing: 2px;
+}
+.timer.danger { color: #ff4444; text-shadow: 0 0 12px #ff0000; animation: pulse 0.5s infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+
+/* ============ ГОЛОСОВАНИЕ ============ */
+.vote-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+.vote-bar { flex: 1; height: 18px; background: #1a1a1a; border: 2px solid #333; border-radius: 4px; overflow: hidden; }
+.vote-fill { height: 100%; background: linear-gradient(90deg, #aa3333, #ff6666); transition: width 0.3s; }
+.vote-count { min-width: 30px; text-align: center; color: #ff8888; font-weight: 900; }
+
+/* ============ ВВОД РЕЧИ ============ */
+.speech-input {
+  width: 100%; background: #0a0a0a; border: 2px solid #33aa33; color: #ccffcc;
+  padding: 8px; border-radius: 6px; font-family: inherit; font-size: 0.82rem;
+  min-height: 100px; resize: vertical;
+}
+.speech-input:focus { outline: none; box-shadow: 0 0 12px #33ff33; }
+
+.preset-bar {
+  display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 8px;
+  padding: 6px; background: #0a0a1a; border: 1px dashed #3333aa; border-radius: 6px;
+}
+.preset-bar .label {
+  width: 100%; color: #aaaaff; font-size: 0.65rem; font-weight: bold;
+  letter-spacing: 1px; margin-bottom: 2px;
+}
+
+/* ============ ЧАТ РЕЧЕЙ ============ */
+.chat-speech {
+  background: #0a1a0a; border-left: 3px solid #33aa33;
+  padding: 6px 8px; margin: 4px 0; border-radius: 0 5px 5px 0;
+  font-size: 0.75rem; color: #ccffcc; line-height: 1.4;
+  word-wrap: break-word;
+}
+.chat-speech.shout { background: #2a1a00; border-left-color: #ffaa00; }
+.chat-speech .meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 3px;
+}
+.chat-speech .who { color: #ffdd33; font-weight: 900; font-size: 0.72rem; }
+.chat-speech .time { color: #666; font-size: 0.62rem; font-family: inherit; }
+.chat-speech .pas { color: #888; font-style: italic; }
+.chat-speech .shout-tag {
+  color: #ffaa00; font-weight: bold; font-size: 0.65rem;
+  display: block; margin-bottom: 2px;
+}
+
+/* ============ МАФИОЗНЫЙ ЧАТ ============ */
+.mafia-chat {
+  background: #1a0a0a; border: 2px solid #5a1a1a; border-radius: 8px;
+  padding: 8px; margin: 6px 0;
+}
+.mafia-chat .mafia-title {
+  color: #ff8888; font-weight: 900; font-size: 0.75rem;
+  letter-spacing: 1px; margin-bottom: 6px; text-align: center;
+}
+.mafia-msg {
+  background: #0a0505; border-left: 3px solid #aa3333;
+  padding: 5px 8px; margin: 4px 0; border-radius: 0 5px 5px 0;
+  font-size: 0.72rem; color: #ffcccc; line-height: 1.4;
+  word-wrap: break-word;
+}
+.mafia-msg .meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 2px;
+}
+.mafia-msg .who { color: #ff8888; font-weight: 900; font-size: 0.68rem; }
+.mafia-msg .time { color: #666; font-size: 0.6rem; }
+.mafia-msg.don-plan { background: #1a1005; border-left-color: #ffaa00; }
+.mafia-msg.don-plan .who { color: #ffdd88; }
+
+.plan-input {
+  width: 100%; background: #0a0505; border: 2px solid #ffaa00;
+  color: #ffdd88; padding: 6px 8px; border-radius: 6px;
+  font-family: inherit; font-size: 0.75rem; min-height: 60px; resize: vertical;
+  margin-top: 4px;
+}
+.plan-input:focus { outline: none; box-shadow: 0 0 10px #ffaa00; }
+
+/* ============ ФАЗА-БЕЙДЖ ============ */
+.phase-badge {
+  text-align: center; padding: 6px; border-radius: 6px; margin: 6px 0;
+  font-weight: 900; letter-spacing: 2px; font-size: 0.9rem;
+}
+.phase-badge.night { background: #0a0a2a; color: #8888ff; border: 2px solid #3333aa; }
+.phase-badge.day { background: #2a2a0a; color: #ffdd33; border: 2px solid #aa8800; }
+.phase-badge.end { background: #1a0a0a; color: #ff4444; border: 2px solid #aa3333; }
+
+/* ============ ПАНЕЛЬ СУДЬИ ============ */
+.judge-panel {
+  background: #1a1a2a; border: 2px solid #8888ff; border-radius: 6px;
+  padding: 8px; margin: 8px 0;
+}
+.judge-panel h3 { color: #aaaaff; margin-top: 0; font-size: 0.8rem; }
+.judge-row {
+  display: flex; align-items: center; gap: 6px; margin: 3px 0;
+  padding: 3px 6px; background: #0a0a1a; border-radius: 5px;
+  font-size: 0.72rem;
+}
+.judge-row .who { flex: 1; color: #ccffcc; }
+.judge-row .fouls-count { color: #ffaa00; font-weight: 900; }
+
+/* ============ ПАНЕЛЬ ОНЛАЙН-СТАТУСА ============ */
+.online-panel {
+  background: #0a1a0a; border: 2px solid #2a5a2a; border-radius: 8px;
+  padding: 6px 8px; margin-bottom: 8px;
+}
+.online-title {
+  color: #88ff88; font-weight: 900; font-size: 0.7rem;
+  letter-spacing: 1px; margin-bottom: 4px;
+}
+.online-list {
+  display: flex; flex-wrap: wrap; gap: 3px;
+}
+.online-chip {
+  padding: 2px 6px; border-radius: 4px; font-size: 0.65rem;
+  background: #0a0a0a; border: 1px solid #333; color: #888;
+  white-space: nowrap;
+}
+.online-chip.on { border-color: #33aa33; color: #88ff88; }
+.online-chip.off { border-color: #aa3333; color: #ff8888; }
+
+/* ============ МОДАЛКИ ============ */
+.modal {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 1000; justify-content: center; align-items: center; flex-direction: column;
+  padding: 20px;
+}
+.modal.active { display: flex; }
+.modal-content {
+  background: #1a1a1a; border: 3px solid #aa3333; border-radius: 12px;
+  padding: 20px; max-width: 400px; width: 100%; text-align: center;
+  margin-bottom: 12px;
+  max-height: 70vh; overflow-y: auto;
+}
+
+/* ============ TOAST ============ */
+.toast-container {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 900; display: flex; flex-direction: column; gap: 8px;
+  align-items: center; pointer-events: none;
+}
+.toast {
+  background: #1a2a1a; border: 3px solid #33ff33; border-radius: 12px;
+  padding: 14px 28px; color: #ccffcc; font-weight: 900;
+  letter-spacing: 2px; font-size: 1rem;
+  box-shadow: 0 0 30px rgba(51,255,51,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+  animation: toastIn 0.4s ease-out, toastOut 0.5s ease-in 3.5s forwards;
+  text-align: center;
+  pointer-events: auto;
+}
+.toast.night { background: #0a0a2a; border-color: #8888ff; color: #ccccff;
+  box-shadow: 0 0 30px rgba(136,136,255,0.8); }
+.toast.vote { background: #2a1a0a; border-color: #ffaa44; color: #ffdd88;
+  box-shadow: 0 0 30px rgba(255,170,68,0.8); }
+.toast.foul { background: #2a0a0a; border-color: #ff3333; color: #ff8888;
+  box-shadow: 0 0 30px rgba(255,51,51,0.8); }
+.toast.end { background: #1a0a0a; border-color: #ff4444; color: #ff8888;
+  box-shadow: 0 0 30px rgba(255,68,68,0.8); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-30px) scale(0.85); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(-20px) scale(0.9); }
+}
+
+/* ============ ЛОББИ И КОМНАТА ============ */
+#lobbyScreen, #roomScreen {
+  max-width: 700px; margin: 20px auto; padding: 20px;
+  background: #1a1a1a; border: 6px solid #333; border-radius: 18px;
+  box-shadow: 0 0 40px rgba(180,0,0,0.25);
+}
+#lobbyScreen h1, #roomScreen h2 {
+  text-align: center; letter-spacing: 3px; margin-bottom: 20px;
+}
+#lobbyScreen h1 { color: #ff4444; text-shadow: 0 0 15px #ff0000; }
+#roomScreen h2 { color: #ffdd33; }
+#lobbyScreen input, #roomScreen input {
+  width: 100%; background: #0a0a0a; border: 2px solid #333; color: #ffdd33;
+  padding: 12px; border-radius: 8px; font-family: inherit; font-size: 0.95rem;
+  margin-top: 6px;
+}
+#lobbyScreen input:focus, #roomScreen input:focus {
+  outline: none; border-color: #ff4444; box-shadow: 0 0 12px #ff4444;
+}
+#lobbyScreen label { color: #aaa; font-size: 0.8rem; margin-top: 12px; display: block; }
+.error { color: #ff6666; font-size: 0.85rem; text-align: center; margin-top: 12px; min-height: 1.2rem; }
+#roomCode {
+  color: #33ff33; font-weight: 900; letter-spacing: 4px; font-size: 1.3rem;
+  text-shadow: 0 0 10px #33ff33;
+}
+
+/* ============ МОБИЛЬНАЯ ВЕРСИЯ ============ */
+@media (max-width: 800px) {
+  body { overflow: auto; }
+  .layout { grid-template-columns: 1fr; height: auto; }
+  .col-side { max-height: 400px; }
+  .toast { font-size: 0.85rem; padding: 10px 18px; }
+}

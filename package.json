@@ -1,0 +1,25 @@
+{
+  "name": "mafia-online",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "socket.io": "^4.8.4"
+  },
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phyzika86/mafia-online.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/phyzika86/mafia-online/issues"
+  },
+  "homepage": "https://github.com/phyzika86/mafia-online#readme"
+}

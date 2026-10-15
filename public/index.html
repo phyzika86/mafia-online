@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мафия Онлайн</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ЭКРАН ЛОББИ -->
+<div id="lobbyScreen" class="screen active">
+  <h1>🎭 МАФИЯ ОНЛАЙН</h1>
+  <div class="info-box">
+    Спортивная мафия ФСМ. <b>10 игроков + 1 Судья</b>.<br>
+    Создайте комнату или войдите по коду.
+  </div>
+  <label>Ваше имя:</label>
+  <input id="nameInput" placeholder="Игрок" maxlength="16">
+
+  <div class="row">
+    <button class="green" onclick="createRoom(false)">➕ СОЗДАТЬ КОМНАТУ</button>
+    <button class="blue" onclick="createRoom(true)">⚖ СОЗДАТЬ (я Судья)</button>
+  </div>
+  <label>Код комнаты:</label>
+  <div class="row">
+    <input id="codeInput" placeholder="ABCD" maxlength="4" style="text-transform:uppercase;text-align:center;font-size:1.2rem;letter-spacing:4px;">
+    <button class="green" onclick="joinRoom()">➡ ВОЙТИ</button>
+  </div>
+  <div id="lobbyError" class="error"></div>
+</div>
+
+<!-- ЭКРАН КОМНАТЫ -->
+<div id="roomScreen" class="screen">
+  <h2>Комната: <span id="roomCode"></span></h2>
+  <div class="info-box">Игроков: <b id="playerCount">0</b>/10 + Судья <span id="judgeStatus"></span></div>
+  <div class="player-list" id="roomPlayers"></div>
+  <div class="row" id="roomControls"></div>
+  <div id="roomError" class="error"></div>
+</div>
+
+<!-- ЭКРАН ИГРЫ -->
+<div id="gameScreen" class="screen">
+  <div class="top-bar" id="topBar">
+    <span class="title">🎭 МАФИЯ</span>
+    <span class="phase" id="topPhase">—</span>
+    <span class="global-timer" id="globalTimer" style="display:none;">⏱ —</span>
+    <span class="my-role-chip" id="myRoleChip" onclick="showMyRoleModal()">
+      <span id="myRoleChipText">—</span> <span class="click-hint">👁</span>
+    </span>
+    <span class="foul-chip" id="foulChip">⚠ 0 фолов</span>
+    <span class="dead-flag" id="deadFlag" style="display:none;">💀 ВЫ МЕРТВЫ</span>
+  </div>
+
+  <div class="layout">
+    <div class="col-main">
+      <div id="gameContent"></div>
+      <div class="log" id="gameLog"></div>
+    </div>
+    <div class="col-side">
+      <div class="chat-tabs" id="chatTabs">
+        <div class="chat-tab active" id="tabPublic" onclick="switchChatTab('public')">💬 ОБЩИЙ</div>
+        <div class="chat-tab mafia locked" id="tabMafia" onclick="switchChatTab('mafia')" style="display:none;">🔪 МАФИЯ</div>
+      </div>
+      <div class="chat-scroll" id="speechChat"></div>
+      <div class="chat-scroll" id="mafiaChat" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА РОЛИ -->
+<div id="myRoleModal" class="modal">
+  <div class="modal-content" id="myRoleModalContent"></div>
+  <button class="green" onclick="closeMyRoleModal()">✅ ЗАКРЫТЬ</button>
+</div>
+
+<!-- МОДАЛКА «ВСЕ РОЛИ» (Судья) -->
+<div id="allRolesModal" class="modal">
+  <div class="modal-content" id="allRolesContent"></div>
+  <button onclick="closeAllRoles()">Закрыть</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
